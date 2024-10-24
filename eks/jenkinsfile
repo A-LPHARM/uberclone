@@ -1,5 +1,8 @@
 pipeline {
     agent any
+     environment {
+		AWS_REGION='us-east-1'
+    }
 
     stages {
         stage('git clone') {
@@ -9,13 +12,14 @@ pipeline {
         }
         
         stage ("terraform init") {
-			steps {
+			steps { withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'awscred', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                 script {
 			     dir('./eks') {
 				   sh "terraform init"
 				   sh "terraform validate"
                    sh "terraform apply --auto-approve"
-                   }
+                       }
+                   }  
                 }
             }       
 		}
