@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uberclone
+  namespace: uberuser
+spec:
+  replicas: 10
+  selector:
+    matchLabels:
+      app: uberclone
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        app: uberclone
+    spec:
+      containers:
+        - name: uberclone-app
+          image: 471112673321.dkr.ecr.us-east-1.amazonaws.com/uberclone:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
