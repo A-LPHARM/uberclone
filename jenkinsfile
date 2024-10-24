@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+    environment {
+		AWS_REGION='us-east-1'
+		//AWS_CREDENTIALS_ID = 'awscred' 
+	}
+    stages {
+        stage('git clone') {
+            steps {
+                git branch: 'main', credentialsId: 'sprigboot', url: 'https://github.com/A-LPHARM/uberclone.git'
+            }
+        }
+        
+        stage('dockerbuild') {
+            steps {
+            withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'awscred', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin 471112673321.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                }
+            }
+        }
+        
+        stage ("image build") {
+			steps {
+					sh "docker build -t uberclone:v1 ."		
+			}
+		}
+        
+    }
+    
+}
