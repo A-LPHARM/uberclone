@@ -21,10 +21,22 @@ pipeline {
         
         stage ("image build") {
 			steps {
-					sh "docker build -t uberclone:v1 ."		
+					sh "docker build -t uberclone:v1 ."	
 			}
 		}
         
+        stage ("ECR deploy and push") {
+			steps {
+				sh "docker tag uberclone:v1 471112673321.dkr.ecr.us-east-1.amazonaws.com/uberclone:v1"
+				sh "docker push 471112673321.dkr.ecr.us-east-1.amazonaws.com/uberclone:v1"
+			}
+		}
+		
+		stage ("image removal") {
+			steps {
+				sh "docker image rmi -f uberclone:v1"
+			}
+		}
     }
     
 }
