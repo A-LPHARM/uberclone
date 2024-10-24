@@ -1,36 +1,39 @@
+# Create EKS Cluster
 resource "aws_eks_cluster" "k8s-production" {
-  name            = local.cluster_name
-  role_arn        = aws_iam_role.eksclusteriam.arn
-
+  provider = aws.us-east-1
+  name     = var.cluster_name
+  role_arn = var.cluster_role_arn
   vpc_config {
-    subnet_ids         = values(aws_subnet.private_subnet)[*].id
+    subnet_ids = var.subnet_ids 
   }
 
   depends_on = [
     aws_iam_role_policy_attachment.AmazonEKSClusterPolicy,
-    aws_iam_role_policy_attachment.AmazonEKSServicePolicy,
+    aws_iam_role_policy_attachment.AmazonEKSServicePolicy
   ]
 
-   #Change Auth Mode from Config to EKS API
-    access_config {
+  # Access configuration
+  access_config {
     authentication_mode                         = "API"
     bootstrap_cluster_creator_admin_permissions = true
   }
 }
 
-#latest version of the Amazon EKS optimized Amazon Linux AMI for a given EKS version by querying an Amazon provided SSM parameter#
+# Get the latest Amazon EKS AMI
 data "aws_ssm_parameter" "eks_ami_release_version" {
-  name = "/aws/service/eks/optimized-ami/${aws_eks_cluster.k8s-production.version}/amazon-linux-2-gpu/recommended/release_version"
+  provider = aws.us-east-1
+  name = "/aws/service/eks/optimized-ami/${var.eks_version}/amazon-linux-2-gpu/recommended/release_version"
 }
 
-
+# EKS Node Group
 resource "aws_eks_node_group" "k8s-workernode" {
+  provider = aws.us-east-1
   cluster_name    = aws_eks_cluster.k8s-production.name
-  node_group_name = "k8s-node"
+  node_group_name = var.node_group_name
   version         = aws_eks_cluster.k8s-production.version
   release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_release_version.value)
-  node_role_arn   = aws_iam_role.workernode.arn
-  subnet_ids      = values(aws_subnet.private_subnet)[*].id
+  node_role_arn   = var.node_role_arn
+  subnet_ids      = var.subnet_ids
 
   scaling_config {
     desired_size = 2
@@ -40,19 +43,15 @@ resource "aws_eks_node_group" "k8s-workernode" {
 
   instance_types = ["t3.micro"]
   capacity_type  = "SPOT"
-  
-    
+
   update_config {
     max_unavailable = 1
   }
 
   tags = {
-    Name = "${local.environment}-${local.cluster_name}"
+    Name = "${var.environment}-${var.cluster_name}"
   }
 
-
-  # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
-  # Otherwise, EKS will not be able to properly delete EC2 Instances and Elastic Network Interfaces.
   depends_on = [
     aws_iam_role_policy_attachment.AmazonEKSWorkerNodePolicy,
     aws_iam_role_policy_attachment.AmazonEKS_CNI_Policy,
@@ -60,16 +59,14 @@ resource "aws_eks_node_group" "k8s-workernode" {
   ]
 }
 
-# Retrieve EKS cluster details
+# Get EKS Cluster details
 data "aws_eks_cluster" "test" {
+  provider = aws.us-east-1
   name = aws_eks_cluster.k8s-production.name
-
-  depends_on = [aws_eks_cluster.k8s-production]
 }
 
-# Retrieve EKS cluster authentication details
+# Get EKS Cluster authentication details
 data "aws_eks_cluster_auth" "ephemeral" {
+  provider = aws.us-east-1
   name = aws_eks_cluster.k8s-production.name
-
-  depends_on = [aws_eks_cluster.k8s-production]
 }

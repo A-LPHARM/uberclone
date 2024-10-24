@@ -1,0 +1,1 @@
+variable "eks_worker_node_role_arn" { }
