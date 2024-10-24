@@ -34,7 +34,7 @@ pipeline {
 		
 		stage ("image removal") {
 			steps {
-				sh "docker image rmi uberclone:v1"
+				sh "docker image rmi -f uberclone:v1"
 			}
 		}
     }
