@@ -8,7 +8,7 @@ pipeline {
             }
         }
         
-        stage ("terraform initalization") {
+        stage ("terraform init") {
 			steps {
 				   sh "terraform init"
 				   sh "terraform validate"
