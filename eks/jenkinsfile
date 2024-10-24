@@ -10,10 +10,14 @@ pipeline {
         
         stage ("terraform init") {
 			steps {
+                script {
+			     dir('./eks') {
 				   sh "terraform init"
 				   sh "terraform validate"
                    sh "terraform apply --auto-approve"
-			}       
+                   }
+                }
+            }       
 		}
     }
 }
