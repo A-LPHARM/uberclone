@@ -1,0 +1,19 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('git clone') {
+            steps {
+                git branch: 'main', credentialsId: 'sprigboot', url: 'https://github.com/A-LPHARM/uberclone.git'
+            }
+        }
+        
+        stage ("terraform initalization") {
+			steps {
+				   sh "terraform init"
+				   sh "terraform validate"
+                   sh "terraform apply --auto-approve"
+			}       
+		}
+    }
+}
