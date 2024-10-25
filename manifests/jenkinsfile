@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+   
+    environment {
+		AWS_REGION ='us-east-1'
+		KUBECONFIG_CREDENTIALS_ID = 'kubecreds'
+		SERVER_URL_CREDENTIALS_ID = 'kube-server'
+	}
+    
+    stages {
+        stage('git clone') {
+            steps {
+               git branch: 'main', credentialsId: 'sprigboot', url: 'https://github.com/A-LPHARM/uberclone.git'
+            }
+        }
+        
+       stage('eks integration and Deployment'){
+			steps { 
+			    dir('./manifests') {
+                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'awscred', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]){ 
+                   withKubeConfig(caCertificate: '', clusterName: '', contextName: '', credentialsId: "${KUBECONFIG_CREDENTIALS_ID}", namespace: '', restrictKubeConfigAccess: false, serverUrl: '${KUBE_SERVER_URL}') {
+                       sh 'aws eks --region us-east-1 update-kubeconfig --name k8s-cluster-production'
+                       sh 'kubectl apply -f namespace'
+                       sh 'kubectl apply -f .'
+                        }
+                   }
+                }
+			} 
+        }
+    }
+}

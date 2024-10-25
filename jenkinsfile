@@ -39,4 +39,17 @@ pipeline {
 		}
     }
     
+ post {
+        success {
+            slackSend channel: '#alerts', color: 'good', message: "Build and deployment has succeeded.", teamDomain: 'praticaldevops', tokenCredentialId: 'sprig-sh'
+        }
+
+        failure {
+            slackSend channel: '#alerts', color: 'danger', message: "Build and deployment has failed.", teamDomain: 'praticaldevops', tokenCredentialId: 'sprig-sh'
+        }
+
+        cleanup {
+            cleanWs()
+        }
+    }
 }
